@@ -1,0 +1,22 @@
+import { supabase } from '../lib/supabase'
+
+export const sendMagicLink = async (email) => {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: 'http://localhost:5173'
+    }
+  })
+  if (error) throw error
+}
+
+export const signOut = async () => {
+  const { error } = await supabase.auth.signOut()
+  if (error) throw error
+}
+
+export const getSession = async () => {
+  const { data, error } = await supabase.auth.getSession()
+  if (error) throw error
+  return data.session
+}
