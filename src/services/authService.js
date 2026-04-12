@@ -4,7 +4,7 @@ export const sendMagicLink = async (email) => {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: 'http://localhost:5173'
+      emailRedirectTo: window.location.origin
     }
   })
   if (error) throw error
