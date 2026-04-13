@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 
-export const createGroup = async (name, userId) => {
+export const createGroup = async (name, userId, userName) => {
   const { data, error } = await supabase
     .from('groups')
     .insert({ name, created_by: userId })
@@ -8,6 +8,11 @@ export const createGroup = async (name, userId) => {
     .single()
 
   if (error) throw error
+
+  await supabase
+    .from('members')
+    .insert({ group_id: data.id, name: userName, user_id: userId, joined_at: new Date().toISOString() })
+
   return data
 }
 

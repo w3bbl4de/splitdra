@@ -25,13 +25,14 @@ export const useGroups = () => {
   }
 
   const addGroup = async (name) => {
-    try {
-      const newGroup = await createGroup(name, user.id)
-      setGroups(prev => [newGroup, ...prev])
-    } catch (err) {
-      setError(err.message)
-    }
+  try {
+    const userName = user.user_metadata?.full_name || user.email.split('@')[0]
+    const newGroup = await createGroup(name, user.id, userName)
+    setGroups(prev => [newGroup, ...prev])
+  } catch (err) {
+    setError(err.message)
   }
+}
 
   return { groups, loading, error, addGroup }
 }
