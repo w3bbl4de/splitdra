@@ -20,3 +20,13 @@ export const getSession = async () => {
   if (error) throw error
   return data.session
 }
+
+export const sendInviteLink = async (email, token) => {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${window.location.origin}/join/${token}`
+    }
+  })
+  if (error) throw error
+}

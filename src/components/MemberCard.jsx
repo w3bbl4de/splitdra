@@ -1,20 +1,39 @@
 import { useState } from 'react'
+import { sendInviteLink } from '../services/authService'
 
 export default function MemberCard({ member, onUpdate }) {
   const [expanded, setExpanded] = useState(false)
   const [email, setEmail] = useState(member.email || '')
   const [phone, setPhone] = useState(member.phone || '')
-  const [saving, setSaving] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState(null)
 
   const inviteLink = `${window.location.origin}/join/${member.invite_token}`
 
   const handleSave = async () => {
-    setSaving(true)
     try {
       await onUpdate(member.id, { email, phone })
-      setExpanded(false)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleSendInvite = async () => {
+    if (!email.trim()) {
+      setError('Enter an email first')
+      return
+    }
+    setSending(true)
+    setError(null)
+    try {
+      await onUpdate(member.id, { email, phone })
+      await sendInviteLink(email, member.invite_token)
+      setSent(true)
+    } catch (err) {
+      setError(err.message)
     } finally {
-      setSaving(false)
+      setSending(false)
     }
   }
 
@@ -44,7 +63,7 @@ export default function MemberCard({ member, onUpdate }) {
         <div>
           <p style={styles.name}>{member.name}</p>
           <p style={styles.status}>
-            {member.user_id ? '✓ Joined' : 'Pending'}
+            {member.user_id ? '✓ Joined' : '⏳ Pending'}
           </p>
         </div>
         <span style={styles.chevron}>{expanded ? '▲' : '▼'}</span>
@@ -54,9 +73,9 @@ export default function MemberCard({ member, onUpdate }) {
         <div style={styles.cardBody}>
           <input
             style={styles.input}
-            placeholder="📧 Email (optional)"
+            placeholder="📧 Email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => { setEmail(e.target.value); setSent(false) }}
           />
           <input
             style={styles.input}
@@ -64,17 +83,24 @@ export default function MemberCard({ member, onUpdate }) {
             value={phone}
             onChange={e => setPhone(e.target.value)}
           />
-          <button style={styles.saveBtn} onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Save'}
+
+          {error && <p style={styles.error}>{error}</p>}
+          {sent && <p style={styles.success}>Invite sent!</p>}
+
+          <button
+            style={styles.inviteBtn}
+            onClick={handleSendInvite}
+            disabled={sending}
+          >
+            {sending ? 'Sending...' : '📨 Send Invite'}
           </button>
 
-          <div style={styles.inviteSection}>
-            <p style={styles.inviteLabel}>Invite Link</p>
-            <p style={styles.inviteLink}>{inviteLink}</p>
-            <div style={styles.inviteButtons}>
-              <button style={styles.copyBtn} onClick={handleCopy}>Copy</button>
-              <button style={styles.shareBtn} onClick={handleShare}>Share</button>
-            </div>
+          <div style={styles.divider} />
+
+          <p style={styles.inviteLabel}>Or share link directly</p>
+          <div style={styles.inviteButtons}>
+            <button style={styles.copyBtn} onClick={handleCopy}>Copy Link</button>
+            <button style={styles.shareBtn} onClick={handleShare}>Share</button>
           </div>
         </div>
       )}
@@ -132,6 +158,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
+    paddingTop: '16px',
   },
   input: {
     width: '100%',
@@ -142,7 +169,7 @@ const styles = {
     boxSizing: 'border-box',
     outline: 'none',
   },
-  saveBtn: {
+  inviteBtn: {
     width: '100%',
     padding: '10px',
     borderRadius: '8px',
@@ -153,21 +180,14 @@ const styles = {
     fontSize: '14px',
     fontWeight: '500',
   },
-  inviteSection: {
-    background: '#f9fafb',
-    borderRadius: '8px',
-    padding: '12px',
+  divider: {
+    height: '1px',
+    background: '#f3f4f6',
   },
   inviteLabel: {
     fontSize: '12px',
     color: '#9ca3af',
-    marginBottom: '4px',
-  },
-  inviteLink: {
-    fontSize: '11px',
-    color: '#6366f1',
-    wordBreak: 'break-all',
-    marginBottom: '10px',
+    textAlign: 'center',
   },
   inviteButtons: {
     display: 'flex',
@@ -191,5 +211,15 @@ const styles = {
     color: '#fff',
     cursor: 'pointer',
     fontSize: '13px',
+  },
+  error: {
+    color: '#ef4444',
+    fontSize: '13px',
+    margin: 0,
+  },
+  success: {
+    color: '#22c55e',
+    fontSize: '13px',
+    margin: 0,
   },
 }
