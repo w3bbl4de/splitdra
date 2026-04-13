@@ -37,20 +37,21 @@ export default function JoinPage() {
   }
 
   const handleClaim = async () => {
-    if (member.user_id) {
-      setError('This invite has already been claimed')
-      return
-    }
-    setClaiming(true)
-    try {
-      await claimMember(token, user.id)
-      navigate(`/groups/${member.group_id}`)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setClaiming(false)
-    }
+  if (member.user_id) {
+    // already claimed, just go to the group
+    navigate(`/groups/${member.group_id}`)
+    return
   }
+  setClaiming(true)
+  try {
+    await claimMember(token, user.id)
+    navigate(`/groups/${member.group_id}`)
+  } catch (err) {
+    setError(err.message)
+  } finally {
+    setClaiming(false)
+  }
+}
 
   const handleSendLink = async () => {
     if (!email.trim()) return
