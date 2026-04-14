@@ -25,6 +25,20 @@ export const addExpense = async ({ groupId, name, amount, paidBy, splitType, spl
   return data
 }
 
+export const getDebts = async (groupId) => {
+  const { data, error } = await supabase
+    .from('expense_splits')
+    .select(`
+      amount,
+      member_id,
+      expenses!inner(paid_by, group_id)
+    `)
+    .eq('expenses.group_id', groupId)
+
+  if (error) throw error
+  return data
+}
+
 export const getExpenses = async (groupId) => {
   const { data, error } = await supabase
     .from('expenses')

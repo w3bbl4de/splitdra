@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useGroupDetail } from '../hooks/useGroupDetail'
 import { useExpenses } from '../hooks/useExpenses'
 import MemberCard from '../components/MemberCard'
 import AddExpenseForm from '../components/AddExpenseForm'
+import { calculateDebts } from '../utils/calculateDebts'
+import { getDebts } from '../services/expenseService'
 
 export default function GroupDetailPage() {
   const { groupId } = useParams()
@@ -14,6 +16,14 @@ export default function GroupDetailPage() {
   const [showMemberForm, setShowMemberForm] = useState(false)
   const [showExpenseForm, setShowExpenseForm] = useState(false)
   const [activeTab, setActiveTab] = useState('expenses')
+  const [debts, setDebts] = useState([])
+
+  useEffect(() => {
+    if (!groupId || members.length === 0) return
+    getDebts(groupId).then(splits => {
+      setDebts(calculateDebts(splits, members))
+    })
+  }, [groupId, members, expenses])
 
   const handleAddMember = async () => {
     if (!name.trim()) return
@@ -55,6 +65,12 @@ export default function GroupDetailPage() {
           onClick={() => setActiveTab('members')}
         >
           Members ({members.length})
+        </button>
+        <button
+          style={{ ...styles.tab, ...(activeTab === 'debts' ? styles.tabActive : {}) }}
+          onClick={() => setActiveTab('debts')}
+        >
+          Debts
         </button>
       </div>
 
@@ -107,6 +123,26 @@ export default function GroupDetailPage() {
             <MemberCard key={member.id} member={member} onUpdate={update} />
           ))}
         </>
+      )}
+
+      {activeTab === 'debts' && (
+        <div>
+          {debts.length === 0 && (
+            <p style={styles.message}>No debts. Everyone is settled up!</p>
+          )}
+          {debts.map((debt, i) => (
+            <div key={i} style={styles.debtCard}>
+              <div style={styles.debtInfo}>
+                <p style={styles.debtText}>
+                  <span style={styles.debtName}>{debt.from}</span>
+                  {' owes '}
+                  <span style={styles.debtName}>{debt.to}</span>
+                </p>
+              </div>
+              <p style={styles.debtAmount}>£{debt.amount}</p>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )
@@ -229,4 +265,30 @@ const styles = {
   },
   message: { textAlign: 'center', color: '#9ca3af', marginTop: '40px' },
   error: { color: '#ef4444', fontSize: '13px' },
+  debtCard: {
+    background: '#fff',
+    borderRadius: '12px',
+    padding: '16px',
+    border: '1px solid #e5e7eb',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '12px',
+  },
+  debtInfo: { flex: 1 },
+  debtText: {
+    fontSize: '14px',
+    color: '#111827',
+    margin: 0,
+  },
+  debtName: {
+    fontWeight: '600',
+    color: '#6366f1',
+  },
+  debtAmount: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#ef4444',
+    margin: 0,
+  },
 }
