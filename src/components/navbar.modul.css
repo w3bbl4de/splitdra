@@ -1,0 +1,81 @@
+.container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/* Bottom Bar */
+.nav {
+  height: 70px;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  position: relative;
+  z-index: 1;
+}
+
+/* Nav Items */
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.active {
+  composes: item;
+  color: #6366f1;
+}
+
+/* FAB spacing gap */
+.fabSpace {
+  width: 60px;
+}
+
+/* Floating Button */
+.fab {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+
+  background: #6366f1;
+  color: white;
+  border: none;
+
+  font-size: 28px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+/* Avatar */
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+  font-weight: bold;
+}
