@@ -1,20 +1,30 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useGroupDetail } from '../hooks/useGroupDetail'
+import { useExpenses } from '../hooks/useExpenses'
 import MemberCard from '../components/MemberCard'
+import AddExpenseForm from '../components/AddExpenseForm'
 
 export default function GroupDetailPage() {
   const { groupId } = useParams()
   const navigate = useNavigate()
   const { group, members, loading, error, add, update } = useGroupDetail(groupId)
+  const { expenses, add: addExpense } = useExpenses(groupId)
   const [name, setName] = useState('')
-  const [showForm, setShowForm] = useState(false)
+  const [showMemberForm, setShowMemberForm] = useState(false)
+  const [showExpenseForm, setShowExpenseForm] = useState(false)
+  const [activeTab, setActiveTab] = useState('expenses')
 
-  const handleAdd = async () => {
+  const handleAddMember = async () => {
     if (!name.trim()) return
     await add(name)
     setName('')
-    setShowForm(false)
+    setShowMemberForm(false)
+  }
+
+  const handleAddExpense = async (data) => {
+    await addExpense({ ...data, groupId })
+    setShowExpenseForm(false)
   }
 
   if (loading) return <p style={styles.message}>Loading...</p>
@@ -25,33 +35,79 @@ export default function GroupDetailPage() {
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate('/groups')}>← Back</button>
         <h1 style={styles.title}>{group?.name}</h1>
-        <button style={styles.addBtn} onClick={() => setShowForm(true)}>+ Add</button>
+        <button
+          style={styles.addBtn}
+          onClick={() => activeTab === 'expenses' ? setShowExpenseForm(true) : setShowMemberForm(true)}
+        >
+          + Add
+        </button>
       </div>
 
-      {showForm && (
-        <div style={styles.form}>
-          <input
-            style={styles.input}
-            placeholder="Member name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-          />
-          <div style={styles.formButtons}>
-            <button style={styles.cancelBtn} onClick={() => setShowForm(false)}>Cancel</button>
-            <button style={styles.createBtn} onClick={handleAdd}>Add</button>
-          </div>
-        </div>
+      <div style={styles.tabs}>
+        <button
+          style={{ ...styles.tab, ...(activeTab === 'expenses' ? styles.tabActive : {}) }}
+          onClick={() => setActiveTab('expenses')}
+        >
+          Expenses
+        </button>
+        <button
+          style={{ ...styles.tab, ...(activeTab === 'members' ? styles.tabActive : {}) }}
+          onClick={() => setActiveTab('members')}
+        >
+          Members ({members.length})
+        </button>
+      </div>
+
+      {activeTab === 'expenses' && (
+        <>
+          {showExpenseForm && (
+            <AddExpenseForm
+              members={members}
+              onSubmit={handleAddExpense}
+              onCancel={() => setShowExpenseForm(false)}
+            />
+          )}
+          {expenses.length === 0 && !showExpenseForm && (
+            <p style={styles.message}>No expenses yet. Add one!</p>
+          )}
+          {expenses.map(expense => (
+            <div key={expense.id} style={styles.expenseCard}>
+              <div style={styles.expenseLeft}>
+                <p style={styles.expenseName}>{expense.name}</p>
+                <p style={styles.expenseMeta}>
+                  Paid by {expense.members?.name} · {expense.split_type}
+                </p>
+              </div>
+              <p style={styles.expenseAmount}>£{expense.amount.toFixed(2)}</p>
+            </div>
+          ))}
+        </>
       )}
 
-      <h2 style={styles.sectionTitle}>Members ({members.length})</h2>
-
-      {members.length === 0 && (
-        <p style={styles.message}>No members yet. Add one!</p>
+      {activeTab === 'members' && (
+        <>
+          {showMemberForm && (
+            <div style={styles.form}>
+              <input
+                style={styles.input}
+                placeholder="Member name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+              />
+              <div style={styles.formButtons}>
+                <button style={styles.cancelBtn} onClick={() => setShowMemberForm(false)}>Cancel</button>
+                <button style={styles.createBtn} onClick={handleAddMember}>Add</button>
+              </div>
+            </div>
+          )}
+          {members.length === 0 && (
+            <p style={styles.message}>No members yet. Add one!</p>
+          )}
+          {members.map(member => (
+            <MemberCard key={member.id} member={member} onUpdate={update} />
+          ))}
+        </>
       )}
-
-      {members.map(member => (
-        <MemberCard key={member.id} member={member} onUpdate={update} />
-      ))}
     </div>
   )
 }
@@ -62,7 +118,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '24px',
+    marginBottom: '16px',
   },
   backBtn: {
     background: 'none',
@@ -84,6 +140,55 @@ const styles = {
     padding: '8px 16px',
     cursor: 'pointer',
     fontSize: '14px',
+  },
+  tabs: {
+    display: 'flex',
+    gap: '8px',
+    marginBottom: '16px',
+    borderBottom: '1px solid #e5e7eb',
+  },
+  tab: {
+    padding: '8px 16px',
+    border: 'none',
+    background: 'none',
+    cursor: 'pointer',
+    fontSize: '14px',
+    color: '#9ca3af',
+    borderBottom: '2px solid transparent',
+    marginBottom: '-1px',
+  },
+  tabActive: {
+    color: '#6366f1',
+    borderBottom: '2px solid #6366f1',
+  },
+  expenseCard: {
+    background: '#fff',
+    borderRadius: '12px',
+    padding: '16px',
+    border: '1px solid #e5e7eb',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '12px',
+  },
+  expenseLeft: { flex: 1 },
+  expenseName: {
+    fontSize: '15px',
+    fontWeight: '500',
+    color: '#111827',
+    margin: 0,
+  },
+  expenseMeta: {
+    fontSize: '12px',
+    color: '#9ca3af',
+    margin: 0,
+    marginTop: '2px',
+  },
+  expenseAmount: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#111827',
+    margin: 0,
   },
   form: {
     background: '#fff',
@@ -121,12 +226,6 @@ const styles = {
     color: '#fff',
     cursor: 'pointer',
     fontSize: '14px',
-  },
-  sectionTitle: {
-    fontSize: '16px',
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: '12px',
   },
   message: { textAlign: 'center', color: '#9ca3af', marginTop: '40px' },
   error: { color: '#ef4444', fontSize: '13px' },
