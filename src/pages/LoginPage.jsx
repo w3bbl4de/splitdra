@@ -1,32 +1,131 @@
 import { useState } from 'react'
-import { sendMagicLink } from '../services/authService'
+import { sendOtp, verifyOtp } from '../services/authService'
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('')
+  const [otp, setOtp] = useState('')
+  const [sent, setSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleSendOtp = async () => {
+    if (!email.trim()) return
+    setLoading(true)
+    setError(null)
+    try {
+      await sendOtp(email)
+      setSent(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) return
+    setLoading(true)
+    setError(null)
+    try {
+      await verifyOtp(email, otp)
+    } catch (err) {
+      setError('Invalid code. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <div style={styles.logo}>💸</div>
+        <h1 style={styles.title}>Bill Splitter</h1>
+        <p style={styles.subtitle}>
+          {sent ? `Enter the code sent to ${email}` : 'Sign in to continue'}
+        </p>
+
+        {!sent ? (
+          <>
+            <input
+              style={styles.input}
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+            />
+            {error && <p style={styles.error}>{error}</p>}
+            <button
+              style={styles.btn}
+              onClick={handleSendOtp}
+              disabled={loading}
+            >
+              {loading ? 'Sending...' : 'Send Code'}
+            </button>
+          </>
+        ) : (
+          <>
+            <input
+              style={styles.input}
+              type="number"
+              placeholder="6-digit code"
+              value={otp}
+              onChange={e => setOtp(e.target.value)}
+              maxLength={6}
+            />
+            {error && <p style={styles.error}>{error}</p>}
+            <button
+              style={styles.btn}
+              onClick={handleVerifyOtp}
+              disabled={loading}
+            >
+              {loading ? 'Verifying...' : 'Verify Code'}
+            </button>
+            <button
+              style={styles.resendBtn}
+              onClick={() => { setSent(false); setOtp(''); setError(null) }}
+            >
+              Use different email
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
 
 const styles = {
-  container: { padding: '24px 16px', maxWidth: '480px', margin: '0 auto' },
-
-  header: {
-    marginBottom: '24px',
-  },
-
-  title: {
-    fontSize: '20px',
-    fontWeight: '600',
-    color: '#111827',
-  },
-
-  subtitle: {
-    fontSize: '14px',
-    color: '#6b7280',
-    marginTop: '4px',
-  },
-
-  form: {
-    background: '#fff',
-    borderRadius: '12px',
+  container: {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#f9fafb',
     padding: '16px',
+  },
+  card: {
+    background: '#fff',
+    borderRadius: '16px',
+    padding: '32px 24px',
+    width: '100%',
+    maxWidth: '400px',
+    textAlign: 'center',
     border: '1px solid #e5e7eb',
   },
-
+  logo: {
+    fontSize: '48px',
+    marginBottom: '8px',
+  },
+  title: {
+    fontSize: '24px',
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: '8px',
+  },
+  subtitle: {
+    fontSize: '14px',
+    color: '#9ca3af',
+    marginBottom: '24px',
+  },
   input: {
     width: '100%',
     padding: '10px 12px',
@@ -36,83 +135,33 @@ const styles = {
     marginBottom: '12px',
     boxSizing: 'border-box',
     outline: 'none',
+    textAlign: 'center',
   },
-
-  button: {
+  btn: {
     width: '100%',
-    padding: '10px',
+    padding: '12px',
     borderRadius: '8px',
     border: 'none',
     background: '#6366f1',
     color: '#fff',
     cursor: 'pointer',
     fontSize: '14px',
+    fontWeight: '500',
+    marginBottom: '8px',
   },
-
-  message: {
-    textAlign: 'center',
+  resendBtn: {
+    width: '100%',
+    padding: '10px',
+    borderRadius: '8px',
+    border: 'none',
+    background: 'none',
     color: '#9ca3af',
-    marginTop: '40px',
+    cursor: 'pointer',
+    fontSize: '13px',
   },
-
   error: {
     color: '#ef4444',
     fontSize: '13px',
-    marginTop: '8px',
+    marginBottom: '8px',
   },
-}
-
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [sent, setSent] = useState(false)
-  const [error, setError] = useState(null)
-
-  const handleSubmit = async () => {
-    try {
-      await sendMagicLink(email)
-      setSent(true)
-    } catch (err) {
-      setError(err.message)
-    }
-  }
-
-  if (sent) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>Check your email</h1>
-          <p style={styles.subtitle}>
-            We sent you a magic link to log in.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Login</h1>
-        <p style={styles.subtitle}>
-          Enter your email to receive a magic link
-        </p>
-      </div>
-
-      <div style={styles.form}>
-        <input
-          type="email"
-          placeholder="your@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
-        />
-
-        <button onClick={handleSubmit} style={styles.button}>
-          Send Magic Link
-        </button>
-
-        {error && <p style={styles.error}>{error}</p>}
-      </div>
-    </div>
-  )
 }

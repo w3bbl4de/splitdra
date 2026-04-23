@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getMemberByToken, claimMember } from '../services/groupService'
-import { supabase } from '../lib/supabase'
+import { sendOtp, verifyOtp } from '../services/authService'
 import { useAuth } from '../hooks/useAuth'
 
 export default function JoinPage() {
@@ -10,6 +10,7 @@ export default function JoinPage() {
   const { user } = useAuth()
   const [member, setMember] = useState(null)
   const [email, setEmail] = useState('')
+  const [otp, setOtp] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -37,34 +38,38 @@ export default function JoinPage() {
   }
 
   const handleClaim = async () => {
-  if (member.user_id) {
-    // already claimed, just go to the group
-    navigate(`/groups/${member.group_id}`)
-    return
-  }
-  setClaiming(true)
-  try {
-    await claimMember(token, user.id)
-    navigate(`/groups/${member.group_id}`)
-  } catch (err) {
-    setError(err.message)
-  } finally {
-    setClaiming(false)
-  }
-}
-
-  const handleSendLink = async () => {
-    if (!email.trim()) return
+    if (member.user_id) {
+      navigate(`/groups/${member.group_id}`)
+      return
+    }
+    setClaiming(true)
     try {
-      await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/join/${token}`
-        }
-      })
-      setSent(true)
+      await claimMember(token, user.id)
+      navigate(`/groups/${member.group_id}`)
     } catch (err) {
       setError(err.message)
+    } finally {
+      setClaiming(false)
+    }
+  }
+
+  const handleSendOtp = async () => {
+    if (!email.trim()) return
+    try {
+      await sendOtp(email)
+      setSent(true)
+      setError(null)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) return
+    try {
+      await verifyOtp(email, otp)
+    } catch (err) {
+      setError('Invalid code. Please try again.')
     }
   }
 
@@ -92,14 +97,29 @@ export default function JoinPage() {
               value={email}
               onChange={e => setEmail(e.target.value)}
             />
-            <button style={styles.btn} onClick={handleSendLink}>
-              Send Magic Link
+            <button style={styles.btn} onClick={handleSendOtp}>
+              Send Code
             </button>
           </>
         )}
 
-        {sent && (
-          <p style={styles.message}>Check your email for the magic link!</p>
+        {!user && sent && (
+          <>
+            <p style={styles.label}>Enter the code sent to {email}</p>
+            <input
+              style={styles.input}
+              type="number"
+              placeholder="6-digit code"
+              value={otp}
+              onChange={e => setOtp(e.target.value)}
+            />
+            <button style={styles.btn} onClick={handleVerifyOtp}>
+              Verify & Join
+            </button>
+            <button style={styles.resendBtn} onClick={() => { setSent(false); setOtp(''); setError(null) }}>
+              Use different email
+            </button>
+          </>
         )}
       </div>
     </div>
@@ -162,6 +182,7 @@ const styles = {
     marginBottom: '12px',
     boxSizing: 'border-box',
     outline: 'none',
+    textAlign: 'center',
   },
   btn: {
     width: '100%',
@@ -173,6 +194,17 @@ const styles = {
     cursor: 'pointer',
     fontSize: '14px',
     fontWeight: '500',
+    marginBottom: '8px',
+  },
+  resendBtn: {
+    width: '100%',
+    padding: '10px',
+    borderRadius: '8px',
+    border: 'none',
+    background: 'none',
+    color: '#9ca3af',
+    cursor: 'pointer',
+    fontSize: '13px',
   },
   message: {
     textAlign: 'center',
