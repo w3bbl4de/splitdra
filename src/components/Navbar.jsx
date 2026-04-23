@@ -1,11 +1,29 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { signOut } from '../services/authService'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { getGroups } from '../services/groupService'
 
 export default function Navbar() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [showProfile, setShowProfile] = useState(false)
+  const [showGroupPicker, setShowGroupPicker] = useState(false)
+  const [groups, setGroups] = useState([])
+
+  useEffect(() => {
+    if (!user) return
+    getGroups(user.id).then(setGroups)
+  }, [user])
+
+  const handleAddClick = () => {
+    setShowGroupPicker(true)
+  }
+
+  const handleGroupSelect = (groupId) => {
+    setShowGroupPicker(false)
+    navigate(`/groups/${groupId}?addExpense=true`)
+  }
 
   const avatarLetter = user?.email?.charAt(0).toUpperCase()
 
@@ -186,6 +204,30 @@ export default function Navbar() {
         }
       `}</style>
 
+      {/* Group Picker Modal */}
+      {showGroupPicker && (
+        <div style={styles.overlay} onClick={() => setShowGroupPicker(false)}>
+          <div style={styles.modal} onClick={e => e.stopPropagation()}>
+            <h2 style={styles.modalTitle}>Select a Group</h2>
+            {groups.length === 0 && (
+              <p style={styles.modalEmpty}>No groups yet. Create one first.</p>
+            )}
+            {groups.map(group => (
+              <button
+                key={group.id}
+                style={styles.groupItem}
+                onClick={() => handleGroupSelect(group.id)}
+              >
+                {group.name}
+              </button>
+            ))}
+            <button style={styles.cancelModalBtn} onClick={() => setShowGroupPicker(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Profile Modal */}
       {showProfile && (
         <div
@@ -253,4 +295,75 @@ export default function Navbar() {
       </div>
     </>
   )
+}
+
+const styles = {
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'flex-end',
+    zIndex: 999,
+  },
+  modal: {
+    width: '100%',
+    background: '#fff',
+    borderRadius: '16px 16px 0 0',
+    padding: '24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  modalTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: '8px',
+  },
+  modalEmpty: {
+    fontSize: '14px',
+    color: '#9ca3af',
+    textAlign: 'center',
+  },
+  groupItem: {
+    width: '100%',
+    padding: '12px',
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb',
+    background: '#fff',
+    cursor: 'pointer',
+    fontSize: '14px',
+    color: '#111827',
+    textAlign: 'left',
+  },
+  cancelModalBtn: {
+    width: '100%',
+    padding: '12px',
+    borderRadius: '8px',
+    border: 'none',
+    background: '#fee2e2',
+    color: '#ef4444',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+    marginTop: '4px',
+  },
+  addNavBtn: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '50%',
+    background: '#6366f1',
+    color: '#fff',
+    border: 'none',
+    fontSize: '24px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '8px',
+  },
 }

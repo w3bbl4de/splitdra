@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useGroupDetail } from '../hooks/useGroupDetail'
 import { useExpenses } from '../hooks/useExpenses'
 import MemberCard from '../components/MemberCard'
@@ -11,6 +11,7 @@ import { useSettlements } from '../hooks/useSettlements'
 export default function GroupDetailPage() {
   const { groupId } = useParams()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { group, members, loading, error, add, update } = useGroupDetail(groupId)
   const { expenses, add: addExpense } = useExpenses(groupId)
   const [name, setName] = useState('')
@@ -19,6 +20,14 @@ export default function GroupDetailPage() {
   const [activeTab, setActiveTab] = useState('expenses')
   const [debts, setDebts] = useState([])
   const { settlements, settle } = useSettlements(groupId)
+
+  useEffect(() => {
+    if (searchParams.get('addExpense') === 'true') {
+      setShowExpenseForm(true)
+      setActiveTab('expenses')
+      setSearchParams({})
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (!groupId || members.length === 0) return
