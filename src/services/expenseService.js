@@ -53,3 +53,17 @@ export const getExpenses = async (groupId) => {
   if (error) throw error
   return data
 }
+
+export const getAllExpenses = async (userId) => {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select(`
+      *,
+      members!expenses_paid_by_fkey(id, name),
+      groups(id, name)
+    `)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}

@@ -27,3 +27,18 @@ export const getSettlements = async (groupId) => {
   if (error) throw error
   return data
 }
+
+export const getAllSettlements = async () => {
+  const { data, error } = await supabase
+    .from('settlements')
+    .select(`
+      *,
+      groups(id, name),
+      from:from_member_id(id, name),
+      to:to_member_id(id, name)
+    `)
+    .order('settled_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
