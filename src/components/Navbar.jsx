@@ -290,7 +290,7 @@ export default function Navbar() {
             <span>Profile</span>
           </button>
 
-          <button className="fab">+</button>
+          <button className="fab" onClick={handleAddClick}>+</button>
         </nav>
       </div>
     </>
