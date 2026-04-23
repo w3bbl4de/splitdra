@@ -1,4 +1,4 @@
-export const calculateDebts = (splits, members) => {
+export const calculateDebts = (splits, members, settlements = []) => {
   const balances = {}
 
   members.forEach(m => { balances[m.id] = 0 })
@@ -14,8 +14,13 @@ export const calculateDebts = (splits, members) => {
     balances[owerId] = (balances[owerId] || 0) - amount
   })
 
+  settlements.forEach(s => {
+    balances[s.from_member_id] = (balances[s.from_member_id] || 0) + s.amount
+    balances[s.to_member_id] = (balances[s.to_member_id] || 0) - s.amount
+  })
+
   const debts = []
-  const memberMap = Object.fromEntries(members.map(m => [m.id, m.name]))
+  const memberMap = Object.fromEntries(members.map(m => [m.id, m]))
 
   const creditors = Object.entries(balances).filter(([, b]) => b > 0)
   const debtors = Object.entries(balances).filter(([, b]) => b < 0)
@@ -26,8 +31,10 @@ export const calculateDebts = (splits, members) => {
       const owed = Math.min(remaining, Math.abs(debt))
       if (owed > 0.01) {
         debts.push({
-          from: memberMap[debtorId],
-          to: memberMap[creditorId],
+          from: memberMap[debtorId]?.name,
+          fromId: debtorId,
+          to: memberMap[creditorId]?.name,
+          toId: creditorId,
           amount: owed.toFixed(2)
         })
         remaining -= owed

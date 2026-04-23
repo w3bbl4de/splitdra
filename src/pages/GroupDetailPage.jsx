@@ -6,6 +6,7 @@ import MemberCard from '../components/MemberCard'
 import AddExpenseForm from '../components/AddExpenseForm'
 import { calculateDebts } from '../utils/calculateDebts'
 import { getDebts } from '../services/expenseService'
+import { useSettlements } from '../hooks/useSettlements'
 
 export default function GroupDetailPage() {
   const { groupId } = useParams()
@@ -17,13 +18,14 @@ export default function GroupDetailPage() {
   const [showExpenseForm, setShowExpenseForm] = useState(false)
   const [activeTab, setActiveTab] = useState('expenses')
   const [debts, setDebts] = useState([])
+  const { settlements, settle } = useSettlements(groupId)
 
   useEffect(() => {
     if (!groupId || members.length === 0) return
     getDebts(groupId).then(splits => {
-      setDebts(calculateDebts(splits, members))
+      setDebts(calculateDebts(splits, members, settlements))
     })
-  }, [groupId, members, expenses])
+  }, [groupId, members, expenses, settlements])
 
   const handleAddMember = async () => {
     if (!name.trim()) return
@@ -128,7 +130,7 @@ export default function GroupDetailPage() {
       {activeTab === 'debts' && (
         <div>
           {debts.length === 0 && (
-            <p style={styles.message}>No debts. Everyone is settled up!</p>
+            <p style={styles.message}>No debts. Everyone is settled up! 🎉</p>
           )}
           {debts.map((debt, i) => (
             <div key={i} style={styles.debtCard}>
@@ -138,8 +140,18 @@ export default function GroupDetailPage() {
                   {' owes '}
                   <span style={styles.debtName}>{debt.to}</span>
                 </p>
+                <p style={styles.debtAmountText}>£{debt.amount}</p>
               </div>
-              <p style={styles.debtAmount}>£{debt.amount}</p>
+              <button
+                style={styles.settleBtn}
+                onClick={() => settle({
+                  fromMemberId: debt.fromId,
+                  toMemberId: debt.toId,
+                  amount: parseFloat(debt.amount)
+                })}
+              >
+                Settle
+              </button>
             </div>
           ))}
         </div>
@@ -285,10 +297,21 @@ const styles = {
     fontWeight: '600',
     color: '#6366f1',
   },
-  debtAmount: {
-    fontSize: '16px',
-    fontWeight: '600',
+  debtAmountText: {
+    fontSize: '13px',
     color: '#ef4444',
     margin: 0,
+    marginTop: '2px',
+  },
+  settleBtn: {
+    padding: '8px 16px',
+    borderRadius: '8px',
+    border: 'none',
+    background: '#22c55e',
+    color: '#fff',
+    cursor: 'pointer',
+    fontSize: '13px',
+    fontWeight: '500',
+    flexShrink: 0,
   },
 }
