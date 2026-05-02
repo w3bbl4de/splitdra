@@ -24,7 +24,14 @@ export const addExpense = async ({ groupId, name, amount, paidBy, splitType, spl
 
   return data
 }
+export const deleteExpense = async (expenseId) => {
+  const { error } = await supabase
+    .from('expenses')
+    .delete()
+    .eq('id', expenseId)
 
+  if (error) throw error
+}
 export const getDebts = async (groupId) => {
   const { data, error } = await supabase
     .from('expense_splits')

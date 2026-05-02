@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getGroupById, getMembers, addMember, updateMember } from '../services/groupService'
-
+import { getGroupById, getMembers, addMember, updateMember, deleteMember } from '../services/groupService'
 export const useGroupDetail = (groupId) => {
   const [group, setGroup] = useState(null)
   const [members, setMembers] = useState([])
@@ -26,7 +25,14 @@ export const useGroupDetail = (groupId) => {
       setLoading(false)
     }
   }
-
+const remove = async (memberId) => {
+  try {
+    await deleteMember(memberId)
+    setMembers(prev => prev.filter(m => m.id !== memberId))
+  } catch (err) {
+    throw err
+  }
+}
   const add = async (name) => {
     try {
       const newMember = await addMember(groupId, name)
@@ -45,5 +51,5 @@ export const useGroupDetail = (groupId) => {
     }
   }
 
-  return { group, members, loading, error, add, update }
+return { group, members, loading, error, add, update, remove }
 }

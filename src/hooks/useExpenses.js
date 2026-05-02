@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { addExpense, getExpenses } from '../services/expenseService'
 import { useAuth } from './useAuth'
-
+import { addExpense, getExpenses, deleteExpense } from '../services/expenseService'
 export const useExpenses = (groupId) => {
   const { user } = useAuth()
   const [expenses, setExpenses] = useState([])
@@ -12,7 +11,14 @@ export const useExpenses = (groupId) => {
     if (!groupId) return
     fetchExpenses()
   }, [groupId])
-
+const remove = async (expenseId) => {
+  try {
+    await deleteExpense(expenseId)
+    setExpenses(prev => prev.filter(e => e.id !== expenseId))
+  } catch (err) {
+    throw err
+  }
+}
   const fetchExpenses = async () => {
     try {
       const data = await getExpenses(groupId)
@@ -33,5 +39,5 @@ export const useExpenses = (groupId) => {
     }
   }
 
-  return { expenses, loading, error, add }
+return { expenses, loading, error, add, remove }
 }

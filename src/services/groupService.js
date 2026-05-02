@@ -15,7 +15,14 @@ export const createGroup = async (name, userId, userName) => {
 
   return data
 }
+export const deleteMember = async (memberId) => {
+  const { error } = await supabase
+    .from('members')
+    .delete()
+    .eq('id', memberId)
 
+  if (error) throw error
+}
 export const getGroups = async (userId) => {
   const { data, error } = await supabase
     .from('groups')

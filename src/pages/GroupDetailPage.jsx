@@ -12,8 +12,8 @@ export default function GroupDetailPage() {
   const { groupId } = useParams()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { group, members, loading, error, add, update } = useGroupDetail(groupId)
-  const { expenses, add: addExpense } = useExpenses(groupId)
+  const { group, members, loading, error, add, update, remove: removeMember } = useGroupDetail(groupId)
+  const { expenses, add: addExpense, remove: removeExpense } = useExpenses(groupId)
   const [name, setName] = useState('')
   const [showMemberForm, setShowMemberForm] = useState(false)
   const [showExpenseForm, setShowExpenseForm] = useState(false)
@@ -99,15 +99,25 @@ export default function GroupDetailPage() {
           )}
           {expenses.map(expense => (
             <div key={expense.id} style={styles.expenseCard}>
-              <div style={styles.expenseLeft}>
-                <p style={styles.expenseName}>{expense.name}</p>
-                <p style={styles.expenseMeta}>
-                  Paid by {expense.members?.name} · {expense.split_type}
-                </p>
-              </div>
-              <p style={styles.expenseAmount}>£{expense.amount.toFixed(2)}</p>
+            <div style={styles.expenseLeft}>
+            <p style={styles.expenseName}>{expense.name}</p>
+            <p style={styles.expenseMeta}>
+            Paid by {expense.members?.name} · {expense.split_type}
+            </p>
             </div>
-          ))}
+            <div style={styles.expenseRight}>
+            <p style={styles.expenseAmount}>£{expense.amount.toFixed(2)}</p>
+            <button
+                style={styles.deleteBtn}
+                onClick={() => {
+                if (window.confirm('Delete this expense?')) removeExpense(expense.id)
+                }}
+      >
+        🗑
+      </button>
+    </div>
+  </div>
+))}
         </>
       )}
 
@@ -131,8 +141,13 @@ export default function GroupDetailPage() {
             <p style={styles.message}>No members yet. Add one!</p>
           )}
           {members.map(member => (
-            <MemberCard key={member.id} member={member} onUpdate={update} />
-          ))}
+  <MemberCard
+    key={member.id}
+    member={member}
+    onUpdate={update}
+    onDelete={removeMember}
+  />
+))}
         </>
       )}
 
@@ -323,4 +338,16 @@ const styles = {
     fontWeight: '500',
     flexShrink: 0,
   },
+  expenseRight: {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+},
+deleteBtn: {
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  fontSize: '16px',
+  padding: '4px',
+},
 }
