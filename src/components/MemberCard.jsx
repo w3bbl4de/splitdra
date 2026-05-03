@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { sendInviteLink } from '../services/authService'
 
-export default function MemberCard({ member, onUpdate ,onDelete}) {
+export default function MemberCard({ member, onUpdate ,onDelete ,isCreator}) {
   const [expanded, setExpanded] = useState(false)
   const [email, setEmail] = useState(member.email || '')
   const [phone, setPhone] = useState(member.phone || '')
@@ -102,14 +102,16 @@ export default function MemberCard({ member, onUpdate ,onDelete}) {
             <button style={styles.copyBtn} onClick={handleCopy}>Copy Link</button>
             <button style={styles.shareBtn} onClick={handleShare}>Share</button>
           </div>
-          <button
-  style={styles.deleteBtn}
-  onClick={() => {
-    if (window.confirm(`Remove ${member.name}?`)) onDelete(member.id)
-  }}
->
-  Remove Member
-</button>
+          {isCreator && (
+  <button
+    style={styles.deleteBtn}
+    onClick={() => {
+      if (window.confirm(`Remove ${member.name}?`)) onDelete(member.id)
+    }}
+  >
+    Remove Member
+  </button>
+)}
         </div>
       )}
     </div>

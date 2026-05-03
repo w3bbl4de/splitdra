@@ -7,12 +7,15 @@ import AddExpenseForm from '../components/AddExpenseForm'
 import { calculateDebts } from '../utils/calculateDebts'
 import { getDebts } from '../services/expenseService'
 import { useSettlements } from '../hooks/useSettlements'
+import { useAuth } from '../hooks/useAuth'
 
 export default function GroupDetailPage() {
   const { groupId } = useParams()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { group, members, loading, error, add, update, remove: removeMember } = useGroupDetail(groupId)
+  const { user } = useAuth()
+  const isCreator = group?.created_by === user?.id
   const { expenses, add: addExpense, remove: removeExpense } = useExpenses(groupId)
   const [name, setName] = useState('')
   const [showMemberForm, setShowMemberForm] = useState(false)
@@ -56,12 +59,14 @@ export default function GroupDetailPage() {
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate('/groups')}>← Back</button>
         <h1 style={styles.title}>{group?.name}</h1>
-        <button
-          style={styles.addBtn}
-          onClick={() => activeTab === 'expenses' ? setShowExpenseForm(true) : setShowMemberForm(true)}
-        >
-          + Add
-        </button>
+        {isCreator && (
+  <button
+    style={styles.addBtn}
+    onClick={() => activeTab === 'expenses' ? setShowExpenseForm(true) : setShowMemberForm(true)}
+  >
+    + Add
+  </button>
+)}
       </div>
 
       <div style={styles.tabs}>
@@ -146,6 +151,7 @@ export default function GroupDetailPage() {
     member={member}
     onUpdate={update}
     onDelete={removeMember}
+    isCreator={isCreator}
   />
 ))}
         </>
