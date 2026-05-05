@@ -50,6 +50,15 @@ export default function GroupDetailPage() {
     await addExpense({ ...data, groupId })
     setShowExpenseForm(false)
   }
+  const handleShareGroup = () => {
+  const link = `${window.location.origin}/join/group/${group?.join_token}`
+  if (navigator.share) {
+    navigator.share({ title: group?.name, text: `Join my group on Bill Splitter!`, url: link })
+  } else {
+    navigator.clipboard.writeText(link)
+    alert('Group link copied!')
+  }
+}
 
   if (loading) return <p style={styles.message}>Loading...</p>
   if (error) return <p style={styles.error}>{error}</p>
@@ -59,6 +68,21 @@ export default function GroupDetailPage() {
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate('/groups')}>← Back</button>
         <h1 style={styles.title}>{group?.name}</h1>
+        
+        {isCreator && (
+  <div style={styles.headerRight}>
+    <button style={styles.shareBtn} onClick={handleShareGroup}>
+      Share
+    </button>
+    <button
+      style={styles.addBtn}
+      onClick={() => activeTab === 'expenses' ? setShowExpenseForm(true) : setShowMemberForm(true)}
+    >
+      + Add
+    </button>
+  </div>
+)}
+
         {isCreator && (
   <button
     style={styles.addBtn}
@@ -355,5 +379,19 @@ deleteBtn: {
   cursor: 'pointer',
   fontSize: '16px',
   padding: '4px',
+},
+headerRight: {
+  display: 'flex',
+  gap: '8px',
+  alignItems: 'center',
+},
+shareBtn: {
+  background: '#fff',
+  color: '#6366f1',
+  border: '1px solid #6366f1',
+  borderRadius: '8px',
+  padding: '8px 16px',
+  cursor: 'pointer',
+  fontSize: '14px',
 },
 }

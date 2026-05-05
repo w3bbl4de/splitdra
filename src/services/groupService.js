@@ -15,6 +15,7 @@ export const createGroup = async (name, userId, userName) => {
 
   return data
 }
+
 export const deleteMember = async (memberId) => {
   const { error } = await supabase
     .from('members')
@@ -23,6 +24,7 @@ export const deleteMember = async (memberId) => {
 
   if (error) throw error
 }
+
 export const getGroups = async (userId) => {
   const { data, error } = await supabase
     .from('groups')
@@ -38,6 +40,42 @@ export const getGroupById = async (groupId) => {
     .from('groups')
     .select('*')
     .eq('id', groupId)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export const getGroupByJoinToken = async (joinToken) => {
+  const { data, error } = await supabase
+    .from('groups')
+    .select('*')
+    .eq('join_token', joinToken)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export const joinGroup = async (groupId, userId, userName) => {
+  const { data: existing } = await supabase
+    .from('members')
+    .select('id')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .single()
+
+  if (existing) return existing
+
+  const { data, error } = await supabase
+    .from('members')
+    .insert({
+      group_id: groupId,
+      name: userName,
+      user_id: userId,
+      joined_at: new Date().toISOString()
+    })
+    .select()
     .single()
 
   if (error) throw error

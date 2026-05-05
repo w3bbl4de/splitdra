@@ -9,6 +9,7 @@ import JoinPage from './pages/JoinPage'
 import ExpensesPage from './pages/ExpensesPage'
 import SettlementsPage from './pages/SettlementsPage'
 import ProfileSetupPage from './pages/ProfileSetupPage'
+import GroupJoinPage from './pages/GroupJoinPage'
 
 function AppContent() {
   const { user, profile, loading } = useAuth()
@@ -25,6 +26,7 @@ function AppContent() {
 
   return (
     <Routes>
+      <Route path="/join/group/:joinToken" element={<GroupJoinPage />} />
       <Route path="/join/:token" element={<JoinPage />} />
       <Route path="/" element={<DashboardPage />}>
         <Route index element={<Navigate to="groups" />} />
